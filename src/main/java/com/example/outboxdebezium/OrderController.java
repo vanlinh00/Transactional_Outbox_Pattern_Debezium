@@ -23,8 +23,8 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderEntity> create(
-            @RequestParam String customer,
-            @RequestParam BigDecimal amount) {
+            @RequestParam("customer") String customer,
+            @RequestParam("amount") BigDecimal amount) {
         OrderEntity createdOrder = orderService.createOrder(customer, amount);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
@@ -35,7 +35,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public OrderEntity getById(@PathVariable Long id) {
+    public OrderEntity getById(@PathVariable("id") Long id) {
         return orderService.findOrderById(id);
     }
 }
