@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Outbox Debezium Demo",
+    "_postman_id": "a7b6c5d4-1122-4334-9556-778899aabbcc",
+    "description": "Postman collection for testing the 100% Java Spring Boot Transactional Outbox API and Debezium Kafka Connect.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "appUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "connectUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Debezium Connect",
+      "item": [
+        {
+          "name": "Register Outbox Connector",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Connector registered or already exists', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"order-outbox-connector\",\n  \"config\": {\n    \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n    \"tasks.max\": \"1\",\n    \"database.hostname\": \"postgres\",\n    \"database.port\": \"5432\",\n    \"database.user\": \"appuser\",\n    \"database.password\": \"apppassword\",\n    \"database.dbname\": \"shopdb\",\n    \"topic.prefix\": \"outbox\",\n    \"table.include.list\": \"public.outbox_events\",\n    \"tombstones.on.delete\": \"false\",\n    \"transforms\": \"outbox\",\n    \"transforms.outbox.type\": \"io.debezium.transforms.outbox.EventRouter\",\n    \"transforms.outbox.table.field.event.id\": \"id\",\n    \"transforms.outbox.table.field.event.key\": \"aggregate_id\",\n    \"transforms.outbox.table.field.event.type\": \"event_type\",\n    \"transforms.outbox.table.field.event.payload\": \"payload\",\n    \"transforms.outbox.route.by.field\": \"aggregate_type\",\n    \"key.converter\": \"org.apache.kafka.connect.storage.StringConverter\",\n    \"value.converter\": \"org.apache.kafka.connect.storage.StringConverter\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{connectUrl}}/connectors",
+              "host": ["{{connectUrl}}"],
+              "path": ["connectors"]
+            }
+          }
+        },
+        {
+          "name": "Check Connector Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Connector and task are RUNNING', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.connector.state).to.eql('RUNNING');",
+                  "    pm.expect(data.tasks.length).to.be.above(0);",
+                  "    pm.expect(data.tasks[0].state).to.eql('RUNNING');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{connectUrl}}/connectors/order-outbox-connector/status",
+              "host": ["{{connectUrl}}"],
+              "path": ["connectors", "order-outbox-connector", "status"]
+            }
+          }
+        },
+        {
+          "name": "Check Connector Offsets (WAL LSN)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{connectUrl}}/connectors/order-outbox-connector/offsets",
+              "host": ["{{connectUrl}}"],
+              "path": ["connectors", "order-outbox-connector", "offsets"]
+            }
+          }
+        },
+        {
+          "name": "List Registered Connectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{connectUrl}}/connectors",
+              "host": ["{{connectUrl}}"],
+              "path": ["connectors"]
+            }
+          }
+        },
+        {
+          "name": "Delete Outbox Connector",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{connectUrl}}/connectors/order-outbox-connector",
+              "host": ["{{connectUrl}}"],
+              "path": ["connectors", "order-outbox-connector"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Orders API (Spring Boot)",
+      "item": [
+        {
+          "name": "Create Order (Writes Order + Outbox Event)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Order created with status 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.id).to.be.a('number');",
+                  "    pm.expect(data.status).to.eql('CREATED');",
+                  "    pm.collectionVariables.set('orderId', String(data.id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{appUrl}}/api/orders?customer=Alice&amount=99.95",
+              "host": ["{{appUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "customer",
+                  "value": "Alice"
+                },
+                {
+                  "key": "amount",
+                  "value": "99.95"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{appUrl}}/api/orders",
+              "host": ["{{appUrl}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{appUrl}}/api/orders/{{orderId}}",
+              "host": ["{{appUrl}}"],
+              "path": ["api", "orders", "{{orderId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
