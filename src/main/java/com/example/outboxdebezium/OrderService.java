@@ -77,6 +77,33 @@ public class OrderService {
         }
     }
 
-    private record OrderCreatedPayload(Long orderId, String customer, BigDecimal amount, String status) {
+    private static final class OrderCreatedPayload {
+        private final Long orderId;
+        private final String customer;
+        private final BigDecimal amount;
+        private final String status;
+
+        private OrderCreatedPayload(Long orderId, String customer, BigDecimal amount, String status) {
+            this.orderId = orderId;
+            this.customer = customer;
+            this.amount = amount;
+            this.status = status;
+        }
+
+        public Long getOrderId() {
+            return orderId;
+        }
+
+        public String getCustomer() {
+            return customer;
+        }
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public String getStatus() {
+            return status;
+        }
     }
 }
