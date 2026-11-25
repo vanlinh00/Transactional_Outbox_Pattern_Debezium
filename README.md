@@ -37,3 +37,18 @@ Together, you get **safe database commits** plus **fast, automatic event deliver
 * **Your Spring Boot app controls:** Saving the `Order` and the `OutboxEvent` together in one database transaction (`@Transactional`).
 * **PostgreSQL controls:** Saving the committed data safely and recording it in the database log (`WAL`).
 * **Debezium controls:** Reading that log and sending the event to Kafka for you.
+
+# Transactional Outbox Pattern — Verification Guide
+### 3. Consume Messages from the Topic
+
+```cmd
+docker exec -it transactional_outbox_pattern_debezium-kafka-1 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic outbox.public.outbox_events --from-beginning
+```
+
+### Verification Evidence
+
+#### Step 1
+![Step 1](evidence/step1.png)
+
+#### Step 2
+![Step 2](evidence/step2.png)
