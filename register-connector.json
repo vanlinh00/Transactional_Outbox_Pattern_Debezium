@@ -1,0 +1,24 @@
+{
+  "name": "order-outbox-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "appuser",
+    "database.password": "apppassword",
+    "database.dbname": "shopdb",
+    "topic.prefix": "outbox",
+    "table.include.list": "public.outbox_events",
+    "tombstones.on.delete": "false",
+    "transforms": "outbox",
+    "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outbox.table.field.event.id": "id",
+    "transforms.outbox.table.field.event.key": "aggregate_id",
+    "transforms.outbox.table.field.event.type": "event_type",
+    "transforms.outbox.table.field.event.payload": "payload",
+    "transforms.outbox.route.by.field": "aggregate_type",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter"
+  }
+}

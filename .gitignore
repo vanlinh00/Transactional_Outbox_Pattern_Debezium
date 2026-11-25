@@ -1,0 +1,9 @@
+target/
+.mvn/
+*.jar
+*.war
+*.class
+.DS_Store
+*.log
+.env*
+!.env.example

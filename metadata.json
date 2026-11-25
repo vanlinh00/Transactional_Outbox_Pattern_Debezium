@@ -1,0 +1,6 @@
+{
+  "name": "Outbox Debezium Demo",
+  "description": "100% Java Spring Boot backend demonstrating the Transactional Outbox pattern with PostgreSQL logical replication, Kafka, and Debezium OutboxEventRouter.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
